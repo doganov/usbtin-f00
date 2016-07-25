@@ -1,4 +1,5 @@
 CC = c++
+CXXFLAGS = -g -std=c++11 -fexceptions
 
 .PHONY: clean
 
