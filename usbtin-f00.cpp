@@ -50,7 +50,9 @@ string readRaw() {
         bytesRead += newlyRead;
 
         if (buff[bytesRead - 1] == '\r') {
-            return string(buff, bytesRead - 1);
+            string response = string(buff, bytesRead - 1);
+            printf("  <- %s\n", response.c_str());
+            return response;
         }
 
         if (buff[bytesRead - 1] == 7) {
@@ -61,6 +63,7 @@ string readRaw() {
 }
 
 void writeRaw(string data) {
+    printf("  -> %s\n", data.c_str());
     int result = write(portDescriptor, data.c_str(), data.size());
     if (result < 0) {
         printf("FAILED TO WRITE!\n");
@@ -71,6 +74,16 @@ void writeRaw(string data) {
 string transmit(string cmd) {
     writeRaw(cmd + "\r");
     return readRaw();
+}
+
+void echo(string cmd) {
+    string response = transmit(cmd);
+    if (response != "z")
+        throw runtime_error("Device rejected command: " + cmd);
+
+    string loopResponse = readRaw();
+    if (loopResponse != cmd)
+        throw runtime_error("Received mismatched loopback response");
 }
 
 void drainBuffer() {
@@ -104,7 +117,7 @@ void initDevice() {
 
     transmit("W2D00");
     transmit("S6");
-    transmit("O");
+    transmit("l");
 }
 
 int main(int argc,char *argv[]) {
@@ -116,6 +129,18 @@ int main(int argc,char *argv[]) {
 
     connect(portName);
     initDevice();
+
+    // Test conversation from 2016/03/30
+    echo("t750840013E0000000000");
+    echo("t758340017E");
+    echo("t75084002138100000000");
+    echo("t75854003112233");
+
+    // Test conversation from 2016/07/15
+    echo("t3006A1018AFF4AFF");
+    echo("t33E51000021089");
+    echo("t3001B1");
+    echo("t30051000025089");
 
     return 0;
 }
