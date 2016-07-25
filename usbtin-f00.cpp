@@ -68,6 +68,11 @@ void writeRaw(string data) {
     }
 }
 
+string transmit(string cmd) {
+    writeRaw(cmd + "\r");
+    return readRaw();
+}
+
 void drainBuffer() {
     char buff[1];
     while (true) {
@@ -94,18 +99,12 @@ void initDevice() {
     writeRaw("C\r");
     drainBuffer();
 
-    writeRaw("v\r");
-    string version = readRaw();
+    string version = transmit("v");
     printf("Connected to USBtin %s\n", version.c_str());
 
-    writeRaw("W2D00\r");
-    readRaw();
-
-    writeRaw("S6\r");
-    readRaw();
-
-    writeRaw("O\r");
-    readRaw();
+    transmit("W2D00");
+    transmit("S6");
+    transmit("O");
 }
 
 int main(int argc,char *argv[]) {
@@ -116,9 +115,7 @@ int main(int argc,char *argv[]) {
     string portName(argv[1]);
 
     connect(portName);
-
-    //EcuSimulatorApp simApp;
-    //simApp.run(portName); // runs endlessly
+    initDevice();
 
     return 0;
 }
