@@ -90,7 +90,7 @@ string readRaw() {
         }
 
         if (buff[bytesRead - 1] == 7) {
-            dump("R", string(buff, bytesRead - 1));
+            dump("R", string(buff, bytesRead));
             //printf("Device returned an error!\n");
             throw runtime_error("Device returned an error!");
         }
@@ -163,15 +163,16 @@ void initDevice() {
 void test(string name, vector<string> sequence) {
     try {
         testsRan++;
-        printf("Starting test '%s'...\n", name.c_str());
+        printf("\nStarting test '%s'...\n", name.c_str());
         connect();
         initDevice();
         for_each(sequence.begin(), sequence.end(), [](string item) { echo(item); });
         testsPass++;
-        printf("Test '%s' PASSED!\n", name.c_str());
-    } catch (runtime_error e) {
+        printf("Test PASSED: '%s'\n", name.c_str());
+    } catch (runtime_error& e) {
         testsFail++;
-        printf("Test '%s' FAILED!\n", name.c_str());
+        printf("ERROR: %s\n", e.what());
+        printf("Test FAILED: '%s'\n", name.c_str());
     }
 }
 
@@ -199,11 +200,11 @@ int main(int argc,char *argv[]) {
     test("F00 after two bytes of data ending with F", vector<string>{
             "t0002000F",
             "t000100"
-         });
+        });
 
     printf("Tests ran   : %d\n", testsRan);
     printf("Tests PASSED: %d\n", testsPass);
     printf("Tests FAILED: %d\n", testsFail);
 
-    return 0;
+    return testsFail;
 }
