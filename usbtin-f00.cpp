@@ -115,7 +115,7 @@ void echo(string cmd) {
 
     string loopResponse = readRaw();
     if (loopResponse != cmd)
-        throw runtime_error("Received mismatched loopback response: '" + cmd + "' vs '" + loopResponse + "'");
+        throw runtime_error("Received mismatched loopback response, expected: '" + cmd + "', actual: '" + loopResponse + "'");
         //printf("Received mismatched loopback response: '%s' vs '%s'\n", cmd.c_str(), loopResponse.c_str());
 }
 
