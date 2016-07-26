@@ -51,19 +51,19 @@ string readRaw() {
 
         if (buff[bytesRead - 1] == '\r') {
             string response = string(buff, bytesRead - 1);
-            printf("  <- %s\n", response.c_str());
+            printf("  R: %s\n", response.c_str());
             return response;
         }
 
         if (buff[bytesRead - 1] == 7) {
-            printf("Device returned an error!\n");
+            //printf("Device returned an error!\n");
             throw runtime_error("Device returned an error!");
         }
     }
 }
 
 void writeRaw(string data) {
-    printf("  -> %s\n", data.c_str());
+    printf("  W: %s\n", data.c_str());
     int result = write(portDescriptor, data.c_str(), data.size());
     if (result < 0) {
         printf("FAILED TO WRITE!\n");
@@ -78,12 +78,15 @@ string transmit(string cmd) {
 
 void echo(string cmd) {
     string response = transmit(cmd);
-    if (response != "z")
+    if (response != "z") {
         throw runtime_error("Device rejected command: " + cmd);
+        //printf("Device rejected command: %s\n", cmd.c_str());
+    }
 
     string loopResponse = readRaw();
     if (loopResponse != cmd)
-        throw runtime_error("Received mismatched loopback response");
+        throw runtime_error("Received mismatched loopback response: '" + cmd + "' vs '" + loopResponse + "'");
+        //printf("Received mismatched loopback response: '%s' vs '%s'\n", cmd.c_str(), loopResponse.c_str());
 }
 
 void drainBuffer() {
@@ -141,6 +144,10 @@ int main(int argc,char *argv[]) {
     echo("t33E51000021089");
     echo("t3001B1");
     echo("t30051000025089");
+
+    // Pinpoint
+    echo("t0002000F");
+    echo("t000100");
 
     return 0;
 }
