@@ -184,6 +184,10 @@ int main(int argc,char *argv[]) {
     }
     portName = string(argv[1]);
 
+    test("Standard doc example", vector<string>{
+            "t001411223344"
+        });
+
     test("Sequence from 2016/03/30", vector<string>{
             "t750840013E0000000000",
             "t758340017E",
