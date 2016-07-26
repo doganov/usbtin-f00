@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fcntl.h>
 #include <stdexcept>
 #include <stdio.h>
@@ -6,6 +7,8 @@
 #include <unistd.h>
 
 using namespace std;
+
+#define STATIC_ARR_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 int portDescriptor = 0;
 
@@ -37,6 +40,31 @@ void connect(string portName) {
     tcsetattr(portDescriptor, TCSANOW, &options);
 }
 
+string formatHex(char c) {
+    char buff[3]; // 1 extra char for the \0
+    snprintf(buff, STATIC_ARR_SIZE(buff), "%02X", c);
+    return string(buff);
+}
+
+string formatHex(string data) {
+    string buff;
+    for (size_t i = 0; i < data.length(); i++) {
+        if (i != 0) {
+            buff.append(" ");
+        }
+        buff.append(formatHex(data[i]));
+    }
+    return buff;
+}
+
+void dump(string mode, string data) {
+    string safeData = data;
+    replace(safeData.begin(), safeData.end(), '\a', ' ');
+    replace(safeData.begin(), safeData.end(), '\r', ' ');
+    printf("  %s: %-24s  %s\n",
+           mode.c_str(), safeData.c_str(), formatHex(data).c_str());
+}
+
 string readRaw() {
     int buffSize = 512;
     char buff[512];
@@ -50,12 +78,14 @@ string readRaw() {
         bytesRead += newlyRead;
 
         if (buff[bytesRead - 1] == '\r') {
+            string responseRaw = string(buff, bytesRead);
             string response = string(buff, bytesRead - 1);
-            printf("  R: %s\n", response.c_str());
+            dump("R", responseRaw);
             return response;
         }
 
         if (buff[bytesRead - 1] == 7) {
+            dump("R", string(buff, bytesRead - 1));
             //printf("Device returned an error!\n");
             throw runtime_error("Device returned an error!");
         }
@@ -63,7 +93,7 @@ string readRaw() {
 }
 
 void writeRaw(string data) {
-    printf("  W: %s\n", data.c_str());
+    dump("W", data);
     int result = write(portDescriptor, data.c_str(), data.size());
     if (result < 0) {
         printf("FAILED TO WRITE!\n");
@@ -97,6 +127,7 @@ void drainBuffer() {
             throw runtime_error("Can't read from port");
         }
         if (bytesRead == 1) {
+            dump("R", string(buff, 1));
             if (buff[0] == '\r' || buff[0] == 7) {
                 break;
             }
