@@ -167,7 +167,6 @@ void test(string name, vector<string> sequence) {
         for_each(sequence.begin(),
                  sequence.end(),
                  echo );
-                 //[](string item) { echo(item); });
         testsPass++;
         printf("Test PASSED: '%s'\n", name.c_str());
     } catch (runtime_error& e) {
