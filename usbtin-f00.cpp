@@ -91,7 +91,6 @@ string readRaw() {
 
         if (buff[bytesRead - 1] == 7) {
             dump("R", string(buff, bytesRead));
-            //printf("Device returned an error!\n");
             throw runtime_error("Device returned an error!");
         }
     }
@@ -101,7 +100,6 @@ void writeRaw(string data) {
     dump("W", data);
     int result = write(portDescriptor, data.c_str(), data.size());
     if (result < 0) {
-        printf("FAILED TO WRITE!\n");
         throw runtime_error("Failed to write to CAN device");
     }
 }
@@ -115,13 +113,13 @@ void echo(string cmd) {
     string response = transmit(cmd);
     if (response != "z") {
         throw runtime_error("Device rejected command: " + cmd);
-        //printf("Device rejected command: %s\n", cmd.c_str());
     }
 
     string loopResponse = readRaw();
-    if (loopResponse != cmd)
-        throw runtime_error("Received mismatched loopback response, expected: '" + cmd + "', actual: '" + loopResponse + "'");
-        //printf("Received mismatched loopback response: '%s' vs '%s'\n", cmd.c_str(), loopResponse.c_str());
+    if (loopResponse != cmd) {
+        throw runtime_error("Mismatched loopback response, expected: "
+                            + cmd + "', actual: '" + loopResponse + "'");
+    }
 }
 
 void drainBuffer() {
@@ -166,7 +164,10 @@ void test(string name, vector<string> sequence) {
         printf("\nStarting test '%s'...\n", name.c_str());
         connect();
         initDevice();
-        for_each(sequence.begin(), sequence.end(), [](string item) { echo(item); });
+        for_each(sequence.begin(),
+                 sequence.end(),
+                 echo );
+                 //[](string item) { echo(item); });
         testsPass++;
         printf("Test PASSED: '%s'\n", name.c_str());
     } catch (runtime_error& e) {
