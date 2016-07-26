@@ -5,14 +5,19 @@
 #include <string>
 #include <termios.h>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 
 #define STATIC_ARR_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
+string portName;
 int portDescriptor = 0;
+int testsRan = 0;
+int testsPass = 0;
+int testsFail = 0;
 
-void connect(string portName) {
+void connect() {
     portDescriptor = open(portName.c_str(), O_RDWR | O_NOCTTY);
     if (portDescriptor == -1) {
         printf("Unable to open port %s\n", portName.c_str());
@@ -152,6 +157,22 @@ void initDevice() {
     transmit("W2D00");
     transmit("S6");
     transmit("l");
+    printf("Device initialized\n");
+}
+
+void test(string name, vector<string> sequence) {
+    try {
+        testsRan++;
+        printf("Starting test '%s'...\n", name.c_str());
+        connect();
+        initDevice();
+        for_each(sequence.begin(), sequence.end(), [](string item) { echo(item); });
+        testsPass++;
+        printf("Test '%s' PASSED!\n", name.c_str());
+    } catch (runtime_error e) {
+        testsFail++;
+        printf("Test '%s' FAILED!\n", name.c_str());
+    }
 }
 
 int main(int argc,char *argv[]) {
@@ -159,26 +180,30 @@ int main(int argc,char *argv[]) {
         printf("You must pass the TTY device as an argument\n");
         return -1;
     }
-    string portName(argv[1]);
+    portName = string(argv[1]);
 
-    connect(portName);
-    initDevice();
+    test("Sequence from 2016/03/30", vector<string>{
+            "t750840013E0000000000",
+            "t758340017E",
+            "t75084002138100000000",
+            "t75854003112233"
+        });
 
-    // Test conversation from 2016/03/30
-    echo("t750840013E0000000000");
-    echo("t758340017E");
-    echo("t75084002138100000000");
-    echo("t75854003112233");
+    test("Sequence from 2016/07/15", vector<string>{
+            "t3006A1018AFF4AFF",
+            "t33E51000021089",
+            "t3001B1",
+            "t30051000025089",
+        });
 
-    // Test conversation from 2016/07/15
-    echo("t3006A1018AFF4AFF");
-    echo("t33E51000021089");
-    echo("t3001B1");
-    echo("t30051000025089");
+    test("F00 after two bytes of data ending with F", vector<string>{
+            "t0002000F",
+            "t000100"
+         });
 
-    // Pinpoint
-    echo("t0002000F");
-    echo("t000100");
+    printf("Tests ran   : %d\n", testsRan);
+    printf("Tests PASSED: %d\n", testsPass);
+    printf("Tests FAILED: %d\n", testsFail);
 
     return 0;
 }
