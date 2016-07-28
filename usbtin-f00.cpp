@@ -23,16 +23,24 @@ void connect() {
         printf("Unable to open port %s\n", portName.c_str());
         throw runtime_error("Unable to open port");
     } else {
-        fcntl(portDescriptor, F_SETFL, 0);
+        if (fcntl(portDescriptor, F_SETFL, 0) != 0) {
+            throw runtime_error("fcntl() failed");
+        }
     }
 
     struct termios options;
     // Get the current options for the port...
-    tcgetattr(portDescriptor, &options);
+    if (tcgetattr(portDescriptor, &options) != 0) {
+        throw runtime_error("tcgetattr() failed");
+    }
 
     // Set the baud rates...
-    cfsetispeed(&options, B115200);
-    cfsetospeed(&options, B115200);
+    if (cfsetispeed(&options, B115200) != 0) {
+        throw runtime_error("cfsetispeed() failed");
+    }
+    if (cfsetospeed(&options, B115200) != 0) {
+        throw runtime_error("cfsetospeed() failed");
+    }
 
     // Enable the receiver and set local mode...
     options.c_cflag |= (CLOCAL | CREAD);
@@ -42,7 +50,9 @@ void connect() {
     options.c_cflag |= CS8;
 
     // Set the new options for the port...
-    tcsetattr(portDescriptor, TCSANOW, &options);
+    if (tcsetattr(portDescriptor, TCSANOW, &options) != 0) {
+        throw runtime_error("tcsetattr() failed");
+    }
 }
 
 string formatHex(char c) {
