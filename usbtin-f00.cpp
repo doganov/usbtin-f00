@@ -43,11 +43,8 @@ void connect() {
     }
 
     // Enable the receiver and set local mode...
+    cfmakeraw(&options);
     options.c_cflag |= (CLOCAL | CREAD);
-    options.c_cflag &= ~PARENB;
-    options.c_cflag &= ~CSTOPB;
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
 
     // Set the new options for the port...
     if (tcsetattr(portDescriptor, TCSANOW, &options) != 0) {
